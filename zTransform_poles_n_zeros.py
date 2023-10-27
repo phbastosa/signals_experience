@@ -40,4 +40,3 @@ plt.yticks(ticks)
 
 plt.tight_layout()
 plt.show()
-

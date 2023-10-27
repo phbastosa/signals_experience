@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 n = 1001
 i = complex(0,1)
 
-w = np.linspace(-np.pi, np.pi, 1001)
+w = np.linspace(-np.pi, np.pi, n)
 
 d2f = w**2
 

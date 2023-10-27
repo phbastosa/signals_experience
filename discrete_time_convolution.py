@@ -60,18 +60,15 @@ def plot_convolution(n1,x1,n2,x2,n,y):
 
     def update(i):
 
-        # markerline
         h1[0].set_ydata(np.flip(x2))
         h1[0].set_xdata(k+i)
 
         h2[0].set_ydata(y[:i+1])
         h2[0].set_xdata(n[:i+1])
 
-        # stemlines
         h1[1].set_paths([np.array([[xx, bottom],[xx, yy]]) for (xx, yy) in zip(k+i, np.flip(x2))])
         h2[1].set_paths([np.array([[xx, bottom],[xx, yy]]) for (xx, yy) in zip(n[:i+1], y[:i+1])])
 
-        # baseline
         h1[2].set_xdata([np.min(k+i), np.max(k+i)])
         h2[2].set_xdata([np.min(n[:i+1]), np.max(n[:i+1])])
 

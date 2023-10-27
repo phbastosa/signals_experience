@@ -1,12 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from scipy import signal
-     
 sine_frequencies = [5, 20, 35]
 
-sampling_frequency = 80  # Hz
-sampling_period = 1.0/sampling_frequency # seconds
+sampling_frequency = 80
+sampling_period = 1.0/sampling_frequency
 
 analogic_time = np.linspace(0, 1, int(1e6))
 analogic_sine = np.zeros_like(analogic_time)
