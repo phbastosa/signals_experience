@@ -8,57 +8,60 @@ def analytical_reflections(v, z, x):
     for i in range(len(z)):
         Vrms[i] = np.sqrt(np.sum(v[:i+1]**2 * Tint[:i+1]) / np.sum(Tint[:i+1]))
         reflections[i] = np.sqrt(x**2.0 + 4.0*np.sum(z[:i+1])**2) / Vrms[i]
-    return Vrms, reflections
+    return reflections
 
+def wavelet_generation(nt, dt, fmax):
+    ti = (nt/2)*dt
+    fc = fmax / (3.0 * np.sqrt(np.pi)) 
+    wavelet = np.zeros(nt)
+    for n in range(nt):            
+        arg = np.pi*((n*dt - ti)*fc*np.pi)**2    
+        wavelet[n] = (1.0 - 2.0*arg)*np.exp(-arg);      
+    return wavelet
 
-total_time = 3.0         # seconds
-n_receivers = 161        # units
-spread_length = 4000     # meters 
-max_model_depth = 2000   # meters
+n_receivers = 320
+spread_length = 8000
+total_time = 10.0
+fmax = 30.0
 
-zint = np.array([500, 1000])         # depth [m]
-vint = np.array([1500, 2000, 3000])  # vp [m/s]
+dx = 25
+dt = 2e-3
 
-x = np.linspace(0, spread_length, n_receivers)
+nt = int(total_time / dt) + 1
+nx = int(n_receivers / 2) + 1
 
-direct_wave = x / vint[0]
-vrms, reflections = analytical_reflections(vint, zint, x)
+z = np.array([2000, 3000, 4000])
+v = np.array([1500, 1650, 2800, 4500])
 
-print(vrms)
+x = np.linspace(0, nx*dx, nx)
 
-depth = np.arange(max_model_depth)
+reflections = analytical_reflections(v, z, x)
 
-Vint = vint[0]*np.ones(len(depth))
-for i in range(len(zint)):
-    Vint[int(np.sum(zint[:i+1])):] = vint[i+1]
+seismogram = np.zeros((nt, nx))
+wavelet = wavelet_generation(nt, dt, fmax)
 
-fig, ax = plt.subplots(nrows = 1, ncols = 2, figsize = (10, 8))
+for j in range(nx):
+    for i in range(len(z)):
+        indt = int(reflections[i, j] / dt)
+        seismogram[indt, j] = 1.0
 
-ax[0].plot(Vint, depth)
+    seismogram[:,j] = np.convolve(seismogram[:, j], wavelet, "same")
 
-ax[0].set_ylim([0,max_model_depth])
-ax[0].set_xticks(np.linspace(np.min(vint), np.max(vint), 5))
-ax[0].set_xticks(np.linspace(np.min(vint), np.max(vint), 5, dtype = int))
+seismogram.flatten("F").astype(np.float32, order = "F").tofile(f"cmp_gather_{nt}x{nx}_{dt*1e6:.0f}us.bin")
 
-ax[0].invert_yaxis()
+fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize = (6, 9))
 
-ax[1].plot(x, direct_wave, ".", label = "Direct wave")    
+ax.imshow(seismogram, aspect = "auto", cmap = "Greys")
 
-for layer in range(len(zint)):        
-    ax[1].plot(x, reflections[layer], ".", label = f"reflection of layer {layer+1}")
+ax.set_xticks(np.linspace(0, nx, 5))
+ax.set_xticklabels(np.linspace(0, nx-1, 5)*dx)
 
-ax[1].set_title("CMP Gather", fontsize = 18)
-ax[1].set_xlabel("Offset [m]", fontsize = 15)
-ax[1].set_ylabel("TWT [s]", fontsize = 15)
+ax.set_yticks(np.linspace(0, nt, 11))
+ax.set_yticklabels(np.linspace(0, nt-1, 11)*dt)
 
-ax[1].set_xticks(np.linspace(0, spread_length, 5))
-ax[1].set_xticklabels(np.linspace(0, spread_length, 5, dtype = int))
-
-ax[1].set_xlim([0, spread_length])
-ax[1].set_ylim([0, total_time])
-ax[1].invert_yaxis()
-
-ax[1].legend(fontsize = 12, loc = "lower right")
+ax.set_title("CMP Gather", fontsize = 18)
+ax.set_xlabel("x = Offset [m]", fontsize = 15)
+ax.set_ylabel("t = TWT [s]", fontsize = 15)
 
 plt.tight_layout()
 plt.show()
