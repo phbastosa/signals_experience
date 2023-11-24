@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-receiver_spacing = 10        
-receivers_per_shot = 48
+receiver_spacing = 25        
+receivers_per_shot = 320
 
-total_shots = 51       
-near_offset = 10    
-shot_spacing = 10      
+total_shots = 161       
+near_offset = 25    
+shot_spacing = 25      
 
 id = np.zeros(receivers_per_shot*total_shots)
 sx = np.zeros(receivers_per_shot*total_shots)

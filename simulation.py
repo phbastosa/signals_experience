@@ -1,15 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def analytical_refractions(v, z, x):
-    refractions = np.zeros((len(z), len(x)))
-    for n in range(len(z)):
-        refractions[n] += x / v[n+1]
-        for i in range(n+1):
-            angle = np.arcsin(v[i] / v[n+1])            
-            refractions[n] += 2.0*z[i]*np.cos(angle) / v[i]
-    return refractions
-
 def analytical_reflections(v, z, x):
     Tint = 2.0 * z / v[:-1]
     Vrms = np.zeros(len(z))
@@ -19,102 +10,58 @@ def analytical_reflections(v, z, x):
         reflections[i] = np.sqrt(x**2.0 + 4.0*np.sum(z[:i+1])**2) / Vrms[i]
     return reflections
 
-n_receivers = 101
-spread_length = 1000
-source_position = 0
+def wavelet_generation(nt, dt, fmax):
+    ti = (nt/2)*dt
+    fc = fmax / (3.0 * np.sqrt(np.pi)) 
+    wavelet = np.zeros(nt)
+    for n in range(nt):            
+        arg = np.pi*((n*dt - ti)*fc*np.pi)**2    
+        wavelet[n] = (1.0 - 2.0*arg)*np.exp(-arg);      
+    return wavelet
 
-total_time = 1.0
+n_receivers = 320
+spread_length = 8000
+total_time = 10.0
+fmax = 30.0
 
-z = np.array([20, 80, 200, 100])
-v = np.array([700, 2500, 3000, 3500, 4000])
+dx = 25
+dt = 2e-3
 
-nx = 1601
-nz = 241
-dh = 2.5
+nt = int(total_time / dt) + 1
+nx = int(n_receivers / 2) + 1
 
-vp = v[0]*np.ones((nz, nx))
-for i in range(len(z)):
-    vp[int(np.sum(z[:i+1]) / dh):] = v[i+1]
+z = np.array([2000, 3000, 4000])
+v = np.array([1500, 1650, 2800, 4500])
 
-offset_min = np.abs(source_position) - 0.5*spread_length 
-offset_max = np.abs(source_position) + 0.5*spread_length
+x = np.linspace(0, nx*dx, nx)
 
-if source_position > 0:
-    offset_aux = offset_min
-    offset_min = offset_max
-    offset_max = offset_aux
+reflections = analytical_reflections(v, z, x)
 
-x = np.linspace(offset_min, offset_max, n_receivers)
+seismogram = np.zeros((nt, nx))
+wavelet = wavelet_generation(nt, dt, fmax)
 
-x_rec = np.linspace(0.5*((nx-1)*dh - spread_length), 0.5*((nx-1)*dh + spread_length), n_receivers) / dh 
-z_rec = np.zeros_like(x)
+for j in range(nx):
+    for i in range(len(z)):
+        indt = int(reflections[i, j] / dt)
+        seismogram[indt, j] = 1.0
 
-x_src = (0.5*((nx-1)*dh) + source_position) / dh
-z_src = 0
+    seismogram[:,j] = np.convolve(seismogram[:, j], wavelet, "same")
 
-xloc = np.linspace(0, (nx-1), 5)
-xlab = np.linspace(0, (nx-1)*dh, 5)
+seismogram.flatten("F").astype(np.float32, order = "F").tofile(f"cmp_gather_{nt}x{nx}_{dt*1e6:.0f}us.bin")
 
-zloc = np.linspace(0, (nz-1), 5)
-zlab = np.linspace(0, (nz-1)*dh, 5)
+fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize = (6, 9))
 
-fig, ax = plt.subplots(figsize = (13, 2))
-ax.imshow(vp, aspect = "auto", cmap = "Greys")
-ax.plot(x_rec, z_rec, "v")
-ax.plot(x_src, z_src, "*")
+ax.imshow(seismogram, aspect = "auto", cmap = "Greys")
 
-ax.set_xticks(xloc)
-ax.set_xticklabels(xlab)
+ax.set_xticks(np.linspace(0, nx, 5))
+ax.set_xticklabels(np.linspace(0, nx-1, 5)*dx)
 
-ax.set_yticks(zloc)
-ax.set_yticklabels(zlab)
+ax.set_yticks(np.linspace(0, nt, 11))
+ax.set_yticklabels(np.linspace(0, nt-1, 11)*dt)
 
-plt.tight_layout()
-
-direct_wave = np.abs(x) / v[0]
-reflections = analytical_reflections(v, z, np.abs(x))
-refractions = analytical_refractions(v, z, np.abs(x))
-
-fig, (ax1, ax2) = plt.subplots(nrows = 1, ncols = 2, figsize = (10, 6))
-
-xticks = np.linspace(offset_min, offset_max, 5)
-
-ax1.plot(x, direct_wave, ".")    
-ax2.plot(x, direct_wave, ".")    
-
-ax1.set_title("Reflections", fontsize = 18)
-ax2.set_title("Refractions", fontsize = 18)
-
-for layer in range(len(z)):    
-    
-    show_reflections = reflections[layer] > direct_wave
-    show_refractions = refractions[layer] < direct_wave
-
-    ax1.plot(x, reflections[layer], ".", label = f"reflection of layer {layer+1}")
-    ax2.plot(x[show_refractions], refractions[layer, show_refractions], ".", label = f"refraction of layer {layer+1}")
-
-ax1.set_xticks(xticks)
-ax1.set_xticklabels(xticks)
-
-ax2.set_xticks(xticks)
-ax2.set_xticklabels(xticks)
-
-ax1.set_xlabel("Offset [m]", fontsize = 15)
-ax1.set_ylabel("TWT [s]", fontsize = 15)
-
-ax2.set_xlabel("Offset [m]", fontsize = 15)
-ax2.set_ylabel("TWT [s]", fontsize = 15)
-
-ax1.set_xlim([offset_min, offset_max])
-ax1.set_ylim([0, total_time])
-ax1.invert_yaxis()
-
-ax2.set_xlim([offset_min, offset_max])
-ax2.set_ylim([0, total_time])
-ax2.invert_yaxis()
-
-ax1.legend(fontsize = 12, loc = "lower right")
-ax2.legend(fontsize = 12, loc = "lower right")
+ax.set_title("CMP Gather", fontsize = 18)
+ax.set_xlabel("x = Offset [m]", fontsize = 15)
+ax.set_ylabel("t = TWT [s]", fontsize = 15)
 
 plt.tight_layout()
 plt.show()
