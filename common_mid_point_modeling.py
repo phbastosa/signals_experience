@@ -21,17 +21,17 @@ def wavelet_generation(nt, dt, fmax):
 
 n_receivers = 320
 spread_length = 8000
-total_time = 10.0
+total_time = 5.0
 fmax = 30.0
 
 dx = 25
-dt = 2e-3
+dt = 1e-3
 
 nt = int(total_time / dt) + 1
 nx = int(n_receivers / 2) + 1
 
-z = np.array([2000, 3000, 4000])
-v = np.array([1500, 1650, 2800, 4500])
+z = np.array([500, 1000, 1000, 1000])
+v = np.array([1500, 1650, 2000, 3000, 4500])
 
 x = np.linspace(0, nx*dx, nx)
 
