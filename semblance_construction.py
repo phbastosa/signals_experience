@@ -32,14 +32,17 @@ for t in range(nt):
     
         mask = target < nt
         
-        # get better correlation equation here 
-        semblance[t, v] = np.sum(seismic[target[mask],:]**2) / nx
+        summation1 = np.sum(np.abs(seismic[target[mask],:]))**2
+        summation2 = np.sum(seismic[target[mask],:]**2)
+        
+        if summation2 != 0.0: 
+            semblance[t, v] = (1.0 / nx) * summation1 / summation2 
 
 
 xloc = np.linspace(0, nv-1, 9)
 xlab = np.linspace(vi, vf, 9)
 
-scale = 5.0*np.std(semblance)
+scale = 10.0*np.std(semblance)
 
 fig, ax = plt.subplots(ncols = 1, nrows = 1, figsize = (6,8))
 

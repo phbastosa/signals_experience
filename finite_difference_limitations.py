@@ -6,7 +6,7 @@ i = complex(0,1)
 
 w = np.linspace(-np.pi, np.pi, n)
 
-d2f = w**2
+d2f = -w**2
 
 fdm_2order = np.exp(i*w) + np.exp(-i*w) - 2.0
 fdm_4order =  (16.0*(np.exp(-i*w) + np.exp(i*w)) - (np.exp(-2.0*i*w) + np.exp(2.0*i*w)) - 30.0) / 12.0
@@ -19,10 +19,10 @@ angle_labels = [r'$-\pi$', r'$-\dfrac{2\pi}{3}$', r'$-\dfrac{\pi}{2}$', r'$-\dfr
 fig, ax = plt.subplots(figsize = (12,5))
 
 ax.plot(w, d2f, label = r'Analytical $\dfrac{d^2f}{dx^2}$' )
-ax.plot(w, np.abs(fdm_2order), label = 'fdm 2º order')
-ax.plot(w, np.abs(fdm_4order), label = 'fdm 4º order')
-ax.plot(w, np.abs(fdm_6order), label = 'fdm 6º order')
-ax.plot(w, np.abs(fdm_8order), label = 'fdm 8º order')
+ax.plot(w, np.real(fdm_2order), label = 'fdm 2º order')
+ax.plot(w, np.real(fdm_4order), label = 'fdm 4º order')
+ax.plot(w, np.real(fdm_6order), label = 'fdm 6º order')
+ax.plot(w, np.real(fdm_8order), label = 'fdm 8º order')
 
 ax.set_xlim([-np.pi, np.pi])
 

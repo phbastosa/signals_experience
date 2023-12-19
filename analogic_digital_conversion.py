@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 sine_frequencies = [5, 20, 35]
 
-sampling_frequency = 80
+sampling_frequency = 71
 sampling_period = 1.0/sampling_frequency
 
 analogic_time = np.linspace(0, 1, int(1e6))
@@ -48,5 +48,5 @@ ax[2].set_ylabel(r"$X(jw)$", fontsize = 15)
 
 plt.tight_layout()
 
-plt.save("analogic_digital_conversion.png", dpi = 200)
+# plt.save("analogic_digital_conversion.png", dpi = 200)
 plt.show()
